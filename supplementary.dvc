@@ -1,0 +1,6 @@
+outs:
+- md5: 3d1882f825e7b99fecfc377c6fbbf74a.dir
+  size: 1026575
+  nfiles: 6
+  hash: md5
+  path: supplementary
