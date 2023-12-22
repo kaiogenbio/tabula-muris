@@ -26,6 +26,15 @@ Twenty organs:
 19. Tongue
 20. Trachea
 
+## General properties of the data
+- As expected, cells from different organs often mixed, with 25 of 54 t-SNE clusters containing at least five cells from distinct organs.
+- 1,016 transcription factors expressed in our dataset.
+
+### Method details
+- Sequences from the NovaSeq were de-multiplexed using **`bcl2fastq` version 2.19.0.316**.
+- Reads were aligned using to the mm10plus genome using **STAR version 2.5.2b** with parameters TK.
+- Gene counts were produced using **HTSEQ version 0.6.1p1** with default parameters, except `stranded` was set to `false`, and `mode` was set to `intersection-nonempty`.
+- Sequences from the microfluidic droplet platform were de-multiplexed and aligned using **CellRanger version 2.0.1**, available from 10x Genomics with default parameters.
 
 ## `raw/`
 
@@ -33,3 +42,13 @@ Twenty organs:
   - source: [figshare:5968960](https://figshare.com/articles/dataset/Single-cell_RNA-seq_data_from_microfluidic_emulsion_v2_/5968960)
 - `tm_ss2.zip` (Tabula Muris sequenced using Smartseq2; version 2)
   - source: [figshare:5829687](https://figshare.com/articles/dataset/Single-cell_RNA-seq_data_from_Smart-seq2_sequencing_of_FACS_sorted_cells_v2_/5829687)
+
+## `build/`
+
+### `preprocess/ss2`
+- Smartseq2 data needs to be merged with annotations file.
+
+### `preprocess/10x`
+
+## Tests
+
