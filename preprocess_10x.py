@@ -25,7 +25,7 @@ def preprocess(adata):
     meta = {}
     axes = OrderedDict()
 
-    adata.layers["counts"] = csr_matrix(adata.X)
+    adata.layers["counts"] = csr_matrix(adata.X.copy())
 
     print("Original adata:", adata)
 

@@ -5,6 +5,7 @@ from pathlib import Path
 
 import argparse
 
+import scvi
 import scanpy as sc
 
 from scipy.sparse import csr_matrix
@@ -35,10 +36,26 @@ def main(*, glob_str, out_dir):
     out_dir.mkdir(parents=True, exist_ok=True)
 
     adata_paths = sorted(Path(".").glob(glob_str))
-    all_adata = concat_adatas(adata_paths)
-    sparsify(all_adata)
+    adata = concat_adatas(adata_paths)
+    sparsify(adata)
 
-    all_adata.write_h5ad(out_dir / "integrated.h5ad")
+    adata.write_h5ad(out_dir / "concatenated.h5ad")
+
+    scvi.model.SCVI.setup_anndata(
+        adata,
+        layer="counts",
+        batch_key="channel",
+        continuous_covariate_keys=None,
+        categorical_covariate_keys=None)
+    model = scvi.model.SCVI(adata)
+    model.train()
+
+    adata.obsm["X_scVI"] = model.get_latent_representation()
+    adata.obsm["X_scVI_MDE"] = scvi.model.utils.mde(model.get_latent_representation())
+
+    model.save(out_dir / "scvi-model.pt", overwrite=True)
+
+    adata.write_h5ad(out_dir / "scvi-integrated.h5ad")
 
 
 if __name__ == "__main__":
