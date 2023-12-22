@@ -16,8 +16,8 @@ from scipy.sparse import csr_matrix
 import utils
 
 CONSTANTS_10X = {
-    "min_genes": 500,
-    "min_umi": 1000,
+    "min_genes": 501,
+    "min_umi": 1001,
     "norm_total": 1e4
 }
 
@@ -148,6 +148,10 @@ def main(*, outdir, dropletdir, annotations_file: Path):
         adata = sc.read_10x_mtx(subdir)
         adata.obs_names_make_unique()
 
+        # perform QC
+        with utils.Tee([open(out_subdir / "preprocess.log", "w")]):
+            adata, meta, axes = preprocess(adata)
+
         # save original indices as "barcode" column
         adata.obs["barcode"] = adata.obs.index
         # match index with annotations_file for join
@@ -155,9 +159,8 @@ def main(*, outdir, dropletdir, annotations_file: Path):
         # merge annotations to adata.obs
         adata.obs = adata.obs.join(annotations, validate="1:1")
 
-        # perform QC
-        with utils.Tee([open(out_subdir / "preprocess.log", "w")]):
-            adata, meta, axes = preprocess(adata)
+        # remove cells without a cell_ontology_class assigned
+        adata = adata[~adata.obs["cell_ontology_class"].isna(), :]
 
         with open(out_subdir / "metadata.json", "w") as fout:
             json.dump(meta, fout, indent=2)
