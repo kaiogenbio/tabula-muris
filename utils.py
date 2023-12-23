@@ -8,6 +8,7 @@ from PIL import Image
 from matplotlib.axes import Axes
 
 import pandas as pd
+import numpy as np
 
 
 class Tee():
@@ -29,6 +30,10 @@ class Tee():
             stream.close()
         sys.stdout = self.orig_stdout
         sys.stderr = self.orig_stderr
+
+
+def sort_adata_by_obs_names(adata):
+    return adata[np.argsort(adata.obs_names), :]
 
 
 def modify_index(df: pd.DataFrame, map_func):

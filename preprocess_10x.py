@@ -1,94 +1,22 @@
 #!/usr/bin/env python
 
 import argparse
-import sys
 import json
 
 from pathlib import Path
-from collections import OrderedDict
 
 import pandas as pd
-import numpy as np
 import scanpy as sc
 
-from scipy.sparse import csr_matrix
-
+from preprocess import preprocess_adata
 import utils
 
+
 CONSTANTS_10X = {
-    "min_genes": 501,
-    "min_umi": 1001,
+    "min_genes": 500,
+    "min_counts": 1000,
     "norm_total": 1e4
 }
-
-def preprocess(adata):
-    meta = {}
-    axes = OrderedDict()
-
-    adata.layers["counts"] = csr_matrix(adata.X.copy())
-
-    print("Original adata:", adata)
-
-    # 1. filter out low quality cells based on low UMIs and low #genes
-    sc.pp.filter_cells(adata, min_genes=CONSTANTS_10X["min_genes"])
-    sc.pp.filter_cells(adata, min_counts=CONSTANTS_10X["min_umi"])
-
-    print("After initial filtering steps:", adata)
-
-    # 2. use QC filters to filter out cells with high # of ERCC reads
-    # NB: 10X sequencing doesn't appear to have any ERCC spike-ins
-    adata.var["ercc"] = adata.var_names.str.lower().str.startswith("ercc-")
-    print("Num ERCC genes:", sum(adata.var["ercc"]))
-    adata = adata[:, ~adata.var["ercc"]]
-
-    sc.pp.calculate_qc_metrics(
-        adata,
-        qc_vars=["ercc"],
-        percent_top=None,
-        log1p=False,
-        inplace=True)
-    axes["highest expressed genes"] = sc.pl.highest_expr_genes(
-        adata,
-        n_top=20,
-        show=False)
-    axes["num unique genes expressed"] = sc.pl.violin(
-        adata,
-        "n_genes_by_counts",
-        jitter=0.4,
-        show=False)
-    axes["total_counts"] = sc.pl.violin(
-        adata,
-        "total_counts",
-        jitter=0.4,
-        show=False)
-    axes["pct_counts_ercc"] = sc.pl.violin(
-        adata,
-        "pct_counts_ercc",
-        jitter=0.4,
-        show=False)
-    axes["total_counts vs. pct_counts_ercc"] = sc.pl.scatter(
-        adata,
-        x="total_counts",
-        y="pct_counts_ercc",
-        show=False)
-    axes["total_counts vs. n_genes_by_counts"] = sc.pl.scatter(adata,
-        x="total_counts",
-        y="n_genes_by_counts",
-        show=False)
-
-    # 3. normalize total, take log
-    sc.pp.normalize_total(adata, target_sum=CONSTANTS_10X["norm_total"])
-    sc.pp.log1p(adata)
-
-    adata.X = csr_matrix(adata.X)
-    adata.raw = adata
-
-    meta["cell_names"] = sorted(adata.obs_names)
-    meta["num_cells"] = len(adata.obs_names)
-    meta["gene_names"] = sorted(adata.var_names)
-    meta["num_genes"] = len(adata.var_names)
-
-    return adata, meta, axes
 
 
 def main(*, outdir, dropletdir, annotations_file: Path):
@@ -150,14 +78,16 @@ def main(*, outdir, dropletdir, annotations_file: Path):
 
         # perform QC
         with utils.Tee([open(out_subdir / "preprocess.log", "w")]):
-            adata, meta, axes = preprocess(adata)
+            adata, meta, axes = preprocess_adata(
+                adata, CONSTANTS_10X
+                )
 
         # save original indices as "barcode" column
         adata.obs["barcode"] = adata.obs.index
         # match index with annotations_file for join
         utils.modify_index(adata.obs, lambda x: f"{channel}_{x[:-2]}")
         # merge annotations to adata.obs
-        adata.obs = adata.obs.join(annotations, validate="1:1")
+        adata.obs = adata.obs.join(annotations)
 
         # remove cells without a cell_ontology_class assigned
         adata = adata[~adata.obs["cell_ontology_class"].isna(), :]
