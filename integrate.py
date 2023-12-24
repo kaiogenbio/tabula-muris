@@ -32,7 +32,7 @@ def sparsify(adata):
     adata.X = csr_matrix(adata.X)
 
 
-def main(*, glob_str, out_dir):
+def main(*, glob_str, out_dir, batch_key):
     out_dir.mkdir(parents=True, exist_ok=True)
 
     adata_paths = sorted(Path(".").glob(glob_str))
@@ -44,7 +44,7 @@ def main(*, glob_str, out_dir):
     scvi.model.SCVI.setup_anndata(
         adata,
         layer="counts",
-        batch_key="channel",
+        batch_key=batch_key, # "channel", "plate.barcode"
         continuous_covariate_keys=None,
         categorical_covariate_keys=None)
     model = scvi.model.SCVI(adata)
@@ -63,7 +63,8 @@ if __name__ == "__main__":
 
     parser.add_argument("--glob", required=True)
     parser.add_argument("--outdir", required=True, type=Path)
+    parser.add_argument("--batchkey", required=True)
 
     args = parser.parse_args()
 
-    main(glob_str=args.glob, out_dir=args.outdir)
+    main(glob_str=args.glob, out_dir=args.outdir, batch_key=args.batchkey)

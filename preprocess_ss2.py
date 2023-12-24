@@ -74,8 +74,7 @@ def main(*, outdir: Path, ss2_csv_dir: Path, annotations_file: Path):
             "subsetD_cluster.ids",
             "subsetE",
             "subsetE_cluster.ids",
-            "subtissue",
-            "plate.barcode",
+            "subtissue"
             ],
         inplace=True
         )

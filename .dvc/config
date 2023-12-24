@@ -1,4 +1,4 @@
 [core]
-    remote = gcs
-['remote "gcs"']
-    url = gs://biodata-1/tabula-muris
+    remote = aws
+['remote "aws"']
+    url = s3://biodata-1/tabula-muris
