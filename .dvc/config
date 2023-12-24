@@ -1,4 +1,4 @@
 [core]
-    remote = test
-['remote "test"']
-    url = /tmp/testing
+    remote = gcs
+['remote "gcs"']
+    url = gs://biodata-1/tabula-muris
